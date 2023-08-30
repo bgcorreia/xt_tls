@@ -113,6 +113,7 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 		if (handshake_protocol == 0x01) {
 			u_int offset, base_offset = 43, extension_offset = 2;
 			u_int16_t session_id_len, cipher_len, compression_len, extensions_len;
+			bool has_sni_extension = false;
 
 			if (base_offset + 2 > data_len) {
 #ifdef XT_TLS_DEBUG
@@ -201,6 +202,7 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 #endif
 
 				if (extension_id == 0) {
+					has_sni_extension = true;
 					u_int16_t name_length, name_type;
 
 					// We don't need the server name list length, so skip that
@@ -232,6 +234,8 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 
 				extension_offset += extension_len;
 			}
+			if (!has_sni_extension)
+				return 1313;
 		}
 	}
 
@@ -253,8 +257,15 @@ static bool tls_mt(const struct sk_buff *skb, struct xt_action_param *par)
 	bool suffix_matching = info->op_flags & XT_TLS_OP_SUFFIX;
 	bool match;
 
-	if ((result = get_tls_hostname(skb, &parsed_host)) != 0)
-		return false;
+	switch(result = get_tls_hostname(skb, &parsed_host)) {
+		case 0:
+			break;
+		case 1313:
+			printk("[xt_tls] TLS Client Hello Packet without SNI Extension\n");
+			return true;
+		default:
+			return false;
+	}
 
 	switch (pattern_type) {
 	    case XT_TLS_OP_HOST:
