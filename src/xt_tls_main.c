@@ -460,6 +460,6 @@ module_exit(tls_mt_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Nils Andreas Svee <nils@stokkdalen.no>");
-MODULE_DESCRIPTION("Xtables: TLS (SNI) matching");
-MODULE_VERSION("0.3.4");
+MODULE_DESCRIPTION("Xtables: TLS (SNI) matching and block SNI no extension found (IP request)");
+MODULE_VERSION("0.4.0");
 MODULE_ALIAS("ipt_tls");
